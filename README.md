@@ -1,15 +1,15 @@
 <h1 align="center">TETO<br>Tracking Events with Teacher Observation<br>for Motion Estimation and Frame Interpolation</h1>
 
 <p align="center">
-  <a href="https://arxiv.org/abs/2602.12003v1"><img src="https://img.shields.io/badge/arXiv-2602.12003-b31b1b.svg"></a>
+  <a href="https://arxiv.org/"><img src="https://img.shields.io/badge/arXiv-2602.12003-b31b1b.svg"></a>
   <a href="https://sheep1283.github.io/TETO_page/"><img src="https://img.shields.io/badge/Project-Page-blue"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/sheep1283/">Jini Yang</a><sup>*1</sup> &nbsp;
   <a href="https://www.linkedin.com/in/eunbeen-hong/">Eunbeen Hong</a><sup>*1</sup> &nbsp;
-  Soowon Son<sup>1</sup> &nbsp;
-  Hyunkoo Lee<sup>1</sup> &nbsp;
+  <a href="https://scholar.google.com/citations?hl=&user=Eo87mRsAAAAJ">Soowon Son</a><sup>1</sup> &nbsp;
+  <a href="https://github.com/guu980-dev/">Hyunkoo Lee</a><sup>1</sup> &nbsp;
   <a href="https://sunghwanhong.github.io/">Sunghwan Hong</a><sup>2</sup> &nbsp;
   <a href="https://cvlab.kau.ac.kr/">Sunok Kim</a><sup>3</sup> &nbsp;
   <a href="https://cvlab.kaist.ac.kr/">Seungryong Kim</a><sup>1</sup>
