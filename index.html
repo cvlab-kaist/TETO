@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TETO: Tracking Events with Teacher Observation for Motion Estimation and Frame Interpolation</title>
+    <meta name="description"
+        content="TETO learns event-based motion estimation from ~25 minutes of real-world data through RGB teacher distillation.">
+
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.1/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <a href="#overview" class="sidebar-item">
+            <div class="sidebar-dot"></div>
+            <span class="sidebar-label">Overview</span>
+        </a>
+        <a href="#abstract" class="sidebar-item">
+            <div class="sidebar-dot"></div>
+            <span class="sidebar-label">Abstract</span>
+        </a>
+        <div class="sidebar-group">
+            <a href="#motion-estimation" class="sidebar-item">
+                <div class="sidebar-dot"></div>
+                <span class="sidebar-label">Motion Estimation</span>
+            </a>
+            <div class="sidebar-subs">
+                <a href="#sub-motivation" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Motivation</span>
+                </a>
+                <a href="#sub-architecture" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Architecture</span>
+                </a>
+                <a href="#sub-query-sampling" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Query Sampling</span>
+                </a>
+                <a href="#sub-me-quant" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Quantitative</span>
+                </a>
+                <a href="#sub-me-qual" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Qualitative</span>
+                </a>
+                <a href="#sub-beyond" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Beyond the Teacher</span>
+                </a>
+                <a href="#sub-motion-appearance" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Motion over Appearance</span>
+                </a>
+            </div>
+        </div>
+        <div class="sidebar-group">
+            <a href="#vfi" class="sidebar-item">
+                <div class="sidebar-dot"></div>
+                <span class="sidebar-label">Frame Interpolation</span>
+            </a>
+            <div class="sidebar-subs">
+                <a href="#sub-vfi-motivation" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Motivation</span>
+                </a>
+                <a href="#sub-vfi-arch" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Architecture</span>
+                </a>
+                <a href="#sub-vfi-ablation" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Ablation</span>
+                </a>
+                <a href="#sub-vfi-quant" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Quantitative</span>
+                </a>
+                <a href="#sub-vfi-qual" class="sidebar-item sidebar-sub-item">
+                    <div class="sidebar-dot"></div>
+                    <span class="sidebar-label">Qualitative</span>
+                </a>
+            </div>
+        </div>
+        <a href="#citation" class="sidebar-item">
+            <div class="sidebar-dot"></div>
+            <span class="sidebar-label">Citation</span>
+        </a>
+    </div>
+
+    <!-- ==================== HERO ==================== -->
+    <section id="overview" class="hero-section">
+        <div class="hero-container">
+            <h1 class="hero-title">
+                <span class="gradient-text">TETO</span><br>
+                Tracking Events with Teacher Observation
+                for Motion Estimation and Frame Interpolation
+            </h1>
+            <p class="hero-status">arXiv 2026</p>
+
+            <div class="hero-authors">
+                <span><a href="https://github.com/sheep1283/" target="_blank">Jini Yang</a><sup>*1</sup></span>
+                <span><a href="https://www.linkedin.com/in/eunbeen-hong/" target="_blank">Eunbeen Hong</a><sup>*1</sup></span>
+                <span><a href="https://scholar.google.com/citations?hl=&user=Eo87mRsAAAAJ" target="_blank">Soowon Son</a><sup>1</sup></span>
+                <span><a href="https://github.com/guu980-dev/" target="_blank">Hyunkoo Lee</a><sup>1</sup></span>
+                <span><a href="https://sunghwanhong.github.io/" target="_blank">Sunghwan Hong</a><sup>2</sup></span>
+                <span><a href="https://cvlab.kau.ac.kr/" target="_blank">Sunok Kim</a><sup>3</sup></span>
+                <span><a href="https://cvlab.kaist.ac.kr/" target="_blank">Seungryong Kim</a><sup>1</sup></span>
+            </div>
+
+            <div class="hero-affiliations">
+                <span><sup>1</sup>KAIST AI</span>
+                <span><sup>2</sup>ETH Zurich</span>
+                <span><sup>3</sup>Korea Aerospace University</span>
+            </div>
+            <div class="hero-notes"><span>*Equal contribution</span></div>
+
+            <div class="hero-buttons">
+                <a href="https://arxiv.org/" class="btn" target="_blank"><i class="fa-solid fa-file-pdf"></i> arXiv</a>
+                <a href="https://github.com/cvlab-kaist/TETO" class="btn btn-outline" target="_blank"><i class="fa-brands fa-github"></i> Code</a>
+                <a href="#citation" class="btn btn-outline"><i class="fa-solid fa-quote-right"></i> BibTeX</a>
+            </div>
+        </div>
+
+        <div class="teaser-container">
+            <div class="tldr-box">
+                <div class="tldr-content">
+                    <span class="tldr-label">TL;DR</span>
+                    <p class="tldr-text">
+                        <span class="tldr-highlight">TETO</span> learns event-based motion estimation from only
+                        <span class="tldr-highlight">~25 minutes</span> of real-world data via RGB teacher distillation,
+                        achieving strong <span class="tldr-highlight">point tracking</span> and <span class="tldr-highlight">optical flow</span>,
+                        and enabling high-quality <span class="tldr-highlight">video frame interpolation</span>.
+                    </p>
+                </div>
+            </div>
+
+
+            <!-- Key numbers -->
+            <div style="display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap; margin: 2rem auto; max-width: 900px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-primary-dark);">~25 min</div>
+                    <div style="font-size: 1rem; color: var(--color-text-muted); margin-top: 0.25rem;">real-world data</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-primary-dark);">0</div>
+                    <div style="font-size: 1rem; color: var(--color-text-muted); margin-top: 0.25rem;">manual annotations</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--color-primary-dark);">2-in-1</div>
+                    <div style="font-size: 1rem; color: var(--color-text-muted); margin-top: 0.25rem;">flow + tracking estimator</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ABSTRACT ==================== -->
+    <section id="abstract" class="section alt-bg">
+        <div class="container">
+            <h2 class="section-title">Abstract</h2>
+            <div class="abstract-text">
+                <p>
+                    Event cameras capture per-pixel brightness changes with microsecond resolution,
+                    offering continuous motion information lost between RGB frames.
+                    However, existing event-based motion estimators depend on large-scale synthetic data
+                    that suffers from a significant sim-to-real gap.
+                    We propose TETO, a teacher-student framework that learns event motion estimation
+                    from only ~25 minutes of unannotated real-world recordings through knowledge distillation
+                    from a pretrained RGB tracker.
+                    Our motion-aware data curation and query sampling strategy maximizes learning from limited data
+                    by disentangling object motion from dominant ego-motion.
+                    The resulting estimator jointly predicts point trajectories and dense optical flow from events,
+                    which we leverage as explicit motion priors to condition a pretrained video diffusion transformer
+                    for frame interpolation.
+                    We achieve competitive point tracking on EVIMO2 and optical flow on DSEC
+                    using orders of magnitude less training data,
+                    and demonstrate that accurate motion estimation translates directly to
+                    superior frame interpolation quality on BS-ERGB and HQ-EVFI.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== MOTION ESTIMATION ==================== -->
+    <section id="motion-estimation" class="section">
+        <div class="container">
+            <h2 class="section-title">Event-based Motion Estimation</h2>
+
+            <!-- Motivation -->
+            <div id="sub-motivation" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Why Real-World Data?</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1rem 0 2rem 0; align-items: center;">
+                    <div style="padding: 1.25rem 1.5rem; background: var(--color-bg-alt); border-left: 3px solid var(--color-primary); border-radius: 0 8px 8px 0;">
+                        <ul style="margin: 0; padding-left: 1.25rem; list-style-type: disc;">
+                            <li style="margin-bottom: 0.5rem; font-size: 1.05rem; line-height: 1.6;">
+                                Synthetic events from interpolated RGB frames oversimplify continuous motion dynamics
+                            </li>
+                            <li style="margin-bottom: 0.5rem; font-size: 1.05rem; line-height: 1.6;">
+                                Synthetic events exhibit periodic artifacts and unrealistic noise statistics
+                            </li>
+                            <li style="margin-bottom: 0.5rem; font-size: 1.05rem; line-height: 1.6;">
+                                Rendering + interpolation + event simulation pipelines are computationally expensive and hard to scale
+                            </li>
+                            <li style="margin-bottom: 0; font-size: 1.05rem; line-height: 1.6;">
+                                The resulting sim-to-real gap limits generalization to real-world dynamic scenes
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="analysis-image-container">
+                        <img src="assets/figures/event_data.png" alt="Training data scale comparison" class="analysis-image">
+                    </div>
+                </div>
+
+                <div class="analysis-image-container" style="margin-bottom: 0.5rem;">
+                    <img src="assets/figures/sim2real.png" alt="Real vs Synthetic event analysis" class="analysis-image">
+                </div>
+            </div>
+
+            <!-- Architecture -->
+            <div id="sub-architecture" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Teacher-Student Distillation</h3>
+                <p>
+                    We distill knowledge from a pretrained RGB tracker (AllTracker) that generates
+                    pseudo trajectories and optical flow on real event-RGB paired sequences.
+                    A lightweight concentration network \(\mathcal{C}\) converts multi-scale event stacks
+                    into a 3-channel representation compatible with the pretrained encoder,
+                    bridging the modality gap without architectural modification.
+                </p>
+
+                <div class="analysis-image-container" style="margin: 1.5rem 0 1rem 0;">
+                    <img src="assets/figures/event_architecture.png" alt="Training Pipeline" class="analysis-image">
+                </div>
+
+                <p>
+                    The student is trained end-to-end with a combined objective
+                    \(\mathcal{L} = \mathcal{L}_{\text{track}} + \lambda\,\mathcal{L}_{\text{flow}}\),
+                    jointly predicting point trajectories and dense optical flow from a single forward pass.
+                </p>
+            </div>
+
+            <!-- Query Sampling -->
+            <div id="sub-query-sampling" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Motion-aware Query Sampling</h3>
+                <p>
+                    Camera ego-motion dominates the motion distribution in limited data,
+                    causing naive sampling to overfit to global motion patterns.
+                    We decompose the teacher's optical flow via RANSAC to isolate object-specific movement,
+                    then oversample 90% of query points from dynamic regions.
+                </p>
+
+                <div class="analysis-image-container" style="margin: 1.5rem 0 1rem 0;">
+                    <img src="assets/figures/motion_mask.png" alt="Motion Query Sampling" class="analysis-image">
+                </div>
+            </div>
+
+            <!-- Quantitative Results -->
+            <div id="sub-me-quant" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Quantitative Results</h3>
+
+                <div class="chart-grid cols-2">
+                    <!-- EVIMO2 -->
+                    <div class="chart-card">
+                        <h4 class="chart-card-title">Point Tracking on EVIMO2</h4>
+                        <div class="table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Event data</th>
+                                        <th>AJ&uarr;</th>
+                                        <th>&delta;<sup>x</sup><sub>avg</sub>&uarr;</th>
+                                        <th>OA&uarr;</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="separator-row"><td colspan="5"></td></tr>
+                                    <tr>
+                                        <td>CoTracker</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">-</td>
+                                        <td>53.1</td>
+                                        <td>66.3</td>
+                                        <td>86.1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>AllTracker</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">-</td>
+                                        <td>57.9</td>
+                                        <td>72.4</td>
+                                        <td>91.7</td>
+                                    </tr>
+                                    <tr class="separator-row"><td colspan="5"></td></tr>
+                                    <tr>
+                                        <td>ETAP</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">~5hr Synth.</td>
+                                        <td>66.1</td>
+                                        <td>78.9</td>
+                                        <td>89.5</td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td><strong>TETO</strong></td>
+                                        <td style="font-size: 0.75rem;">~25min Real</td>
+                                        <td><strong>67.9</strong></td>
+                                        <td><strong>81.4</strong></td>
+                                        <td><strong>92.2</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- DSEC -->
+                    <div class="chart-card">
+                        <h4 class="chart-card-title">Optical Flow on DSEC</h4>
+                        <div class="table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Setting</th>
+                                        <th>EPE&darr;</th>
+                                        <th>AE&darr;</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="separator-row"><td colspan="4"></td></tr>
+                                    <tr>
+                                        <td>MultiCM</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">In-domain</td>
+                                        <td>3.47</td>
+                                        <td>13.98</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Paredes et al.</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">In-domain</td>
+                                        <td>2.33</td>
+                                        <td>10.56</td>
+                                    </tr>
+                                    <tr>
+                                        <td>VSA-SM</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">In-domain</td>
+                                        <td>2.22</td>
+                                        <td>8.86</td>
+                                    </tr>
+                                    <tr>
+                                        <td>E2FAI</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">In-domain</td>
+                                        <td><u>1.78</u></td>
+                                        <td>6.44</td>
+                                    </tr>
+                                    <tr class="separator-row"><td colspan="4"></td></tr>
+                                    <tr>
+                                        <td>TETO</td>
+                                        <td style="color: var(--color-text-muted); font-size: 0.75rem;">Zero-shot</td>
+                                        <td>2.15</td>
+                                        <td><u>6.08</u></td>
+                                    </tr>
+                                    <tr class="highlight-row">
+                                        <td><strong>TETO</strong></td>
+                                        <td style="font-size: 0.75rem;">In-domain</td>
+                                        <td><strong>1.39</strong></td>
+                                        <td><strong>4.31</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Qualitative Results -->
+            <div id="sub-me-qual" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Qualitative Results</h3>
+
+                <div class="analysis-image-container" style="margin-bottom: 1rem;">
+                    <img src="assets/figures/evimo_qual.png" alt="EVIMO2 Qualitative Comparison" class="analysis-image">
+                </div>
+                <div class="results-caption" style="margin-bottom: 2.5rem;">
+                    <p>Point tracking on EVIMO2. Ground-truth trajectories in green, predictions in blue.</p>
+                </div>
+
+                <!-- BS-ERGB Tracking Videos -->
+                <h4 style="font-size: 1.25rem; font-weight: 600; color: var(--color-text-main); margin-bottom: 1rem;">Tracking on BS-ERGB</h4>
+                <div class="carousel-container" style="margin-bottom: 1rem;">
+                    <div class="carousel-viewport">
+                        <div class="carousel-track" id="bsergb-track">
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="track/track_1.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="track/track_2.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="track/track_3.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="track/track_4.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="track/track_5.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="track/track_6.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-nav-btn prev" onclick="moveCarousel('bsergb', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button class="carousel-nav-btn next" onclick="moveCarousel('bsergb', 1)"><i class="fa-solid fa-chevron-right"></i></button>
+                    <div class="carousel-dots" id="bsergb-dots">
+                        <button class="carousel-dot active" onclick="goToSlide('bsergb', 0)"></button>
+                        <button class="carousel-dot" onclick="goToSlide('bsergb', 1)"></button>
+                        <button class="carousel-dot" onclick="goToSlide('bsergb', 2)"></button>
+                        <button class="carousel-dot" onclick="goToSlide('bsergb', 3)"></button>
+                        <button class="carousel-dot" onclick="goToSlide('bsergb', 4)"></button>
+                        <button class="carousel-dot" onclick="goToSlide('bsergb', 5)"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beyond the Teacher -->
+            <div id="sub-beyond" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Beyond the Teacher</h3>
+                <p>
+                    Event cameras capture continuous brightness changes where RGB sensors fail.
+                    Through distillation, TETO inherits this advantage &mdash;
+                    the student exploits temporal motion cues unavailable to the teacher,
+                    enabling robust tracking where the teacher itself breaks down.
+                </p>
+
+                <div class="analysis-image-container" style="margin: 1.5rem 0 0.5rem 0;">
+                    <img src="assets/figures/rgb_fail.png" alt="Extreme Conditions" class="analysis-image">
+                </div>
+                <div class="results-caption">
+                    <p>In nighttime and high-speed scenarios, AllTracker (teacher) fails while TETO succeeds.</p>
+                </div>
+            </div>
+
+            <!-- Motion over Appearance -->
+            <div id="sub-motion-appearance" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Motion over Appearance</h3>
+                <p>
+                    Appearance-based RGB trackers confuse visually similar objects
+                    or fail under visual noise like reflections.
+                    TETO tracks through these cases using event-derived motion cues
+                    instead of appearance matching.
+                </p>
+
+                <div class="analysis-image-container" style="margin: 1.5rem 0 0.5rem 0;">
+                    <img src="assets/figures/beyond_juggling.png" alt="Juggling scene" class="analysis-image">
+                </div>
+                <div class="results-caption" style="margin-bottom: 2rem;">
+                    <p>
+                        Visually similar juggling pins confuse appearance-based matching.
+                        TETO distinguishes each object through its distinct motion trajectory.
+                    </p>
+                </div>
+
+                <div class="analysis-image-container" style="margin: 0 0 0.5rem 0;">
+                    <img src="assets/figures/beyond_fishtank.png" alt="Fish tank scene" class="analysis-image">
+                </div>
+                <div class="results-caption">
+                    <p>
+                        Reflections and bubbles create appearance noise that breaks RGB matching.
+                        TETO tracks through these distractors using motion signals.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ==================== VIDEO FRAME INTERPOLATION ==================== -->
+    <section id="vfi" class="section alt-bg">
+        <div class="container">
+            <h2 class="section-title">Video Frame Interpolation</h2>
+
+            <!-- Motivation -->
+            <div id="sub-vfi-motivation" data-subsection class="results-block">
+                <p style="font-size: 1.25rem; line-height: 1.7;">
+                    Event cameras provide continuous motion signals during blind time between RGB frames &mdash;
+                    exactly the information needed for video frame interpolation.
+                    If this motion estimation is accurate, frame synthesis naturally follows.
+                    We condition a pretrained video diffusion transformer with three complementary signals
+                    from TETO: optical flow, point trajectories, and an event motion mask.
+                </p>
+            </div>
+
+            <!-- Architecture -->
+            <div id="sub-vfi-arch" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Architecture</h3>
+
+                <div class="analysis-image-container" style="margin-bottom: 1.5rem;">
+                    <img src="assets/figures/interp_arch.png" alt="VFI Architecture" class="analysis-image">
+                </div>
+
+                <div style="margin: 0 0 1rem 0; padding: 1.25rem 1.5rem; background: white; border-left: 3px solid var(--color-primary); border-radius: 0 8px 8px 0;">
+                    <ul style="margin: 0; padding-left: 1.25rem; list-style-type: disc;">
+                        <li style="margin-bottom: 0.5rem; font-size: 1.05rem; line-height: 1.6;">
+                            <strong>Flow warping</strong> &mdash; boundary frames warped to target timestamp for motion-aligned denoising initialization
+                        </li>
+                        <li style="margin-bottom: 0.5rem; font-size: 1.05rem; line-height: 1.6;">
+                            <strong>Event motion mask</strong> &mdash; \(\mathcal{M}_{\text{event}}\) from raw events directs generation toward dynamic regions
+                        </li>
+                        <li style="margin-bottom: 0; font-size: 1.05rem; line-height: 1.6;">
+                            <strong>Trajectory-guided attention</strong> &mdash; point trajectories supervise DiT self-attention for fine-grained correspondence
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Ablation -->
+            <div id="sub-vfi-ablation" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Ablation Study</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+                    <div class="chart-card">
+                        <h4 class="chart-card-title">Component Analysis on BS-ERGB</h4>
+                        <div class="table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Model</th>
+                                        <th>FID&darr;</th>
+                                        <th>LPIPS&darr;</th>
+                                        <th>PSNR&uarr;</th>
+                                        <th>SSIM&uarr;</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="separator-row"><td colspan="5"></td></tr>
+                                    <tr class="highlight-row">
+                                        <td><strong>TETO-VFI</strong></td>
+                                        <td><strong>10.11</strong></td>
+                                        <td><strong>0.0821</strong></td>
+                                        <td><strong>25.42</strong></td>
+                                        <td><strong>0.8022</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>&minus; \(\mathcal{M}_{\text{event}}\)</td>
+                                        <td>11.06</td>
+                                        <td>0.0867</td>
+                                        <td>23.58</td>
+                                        <td>0.8076</td>
+                                    </tr>
+                                    <tr>
+                                        <td>&minus; \(\mathcal{L}_{\text{attn}}\)</td>
+                                        <td>10.82</td>
+                                        <td>0.0869</td>
+                                        <td>23.37</td>
+                                        <td>0.8014</td>
+                                    </tr>
+                                    <tr>
+                                        <td>&minus; \(\mathcal{F}_{\text{warp}}\)</td>
+                                        <td>13.88</td>
+                                        <td>0.1203</td>
+                                        <td>21.96</td>
+                                        <td>0.7573</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="analysis-image-container">
+                            <img src="assets/figures/vfi_abl_qual.png" alt="VFI Ablation Qualitative" class="analysis-image">
+                        </div>
+                        <div class="results-caption" style="margin-top: 0.5rem;">
+                            <p>Explicit motion signals (flow warping, trajectory attention, event motion mask) guide the diffusion model to faithfully reconstruct fine-grained motion patterns such as ball seams and elastic deformations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quantitative Results -->
+            <div id="sub-vfi-quant" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Quantitative Results</h3>
+
+                <!-- BS-ERGB -->
+                <div class="chart-card" style="margin-bottom: 2rem;">
+                    <h4 class="chart-card-title">Video Frame Interpolation on BS-ERGB</h4>
+                    <div class="table-container">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">Method</th>
+                                    <th colspan="4">&times;1</th>
+                                    <th colspan="4">&times;3</th>
+                                    <th colspan="4">&times;6</th>
+                                </tr>
+                                <tr>
+                                    <th>FID&darr;</th><th>LPIPS&darr;</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th>
+                                    <th>FID&darr;</th><th>LPIPS&darr;</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th>
+                                    <th>FID&darr;</th><th>LPIPS&darr;</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="separator-row"><td colspan="13"></td></tr>
+                                <tr>
+                                    <td>TimeLens-XL</td>
+                                    <td>15.29</td><td>0.0808</td><td><strong>28.27</strong></td><td>0.8223</td>
+                                    <td>38.11</td><td>0.0695</td><td><strong>29.73</strong></td><td><strong>0.8367</strong></td>
+                                    <td>38.11</td><td>0.1314</td><td>22.43</td><td>0.7574</td>
+                                </tr>
+                                <tr>
+                                    <td>CBMNet-Large</td>
+                                    <td>10.64</td><td>0.1667</td><td>29.23</td><td>0.7737</td>
+                                    <td>11.23</td><td>0.1730</td><td>28.46</td><td>0.7580</td>
+                                    <td>13.31</td><td>0.1791</td><td><strong>27.67</strong></td><td>0.7511</td>
+                                </tr>
+                                <tr>
+                                    <td>RE-VDM</td>
+                                    <td>16.37</td><td>0.1004</td><td>28.04</td><td><strong>0.8631</strong></td>
+                                    <td>16.66</td><td>0.1268</td><td>27.03</td><td>0.8119</td>
+                                    <td>19.40</td><td>0.1258</td><td>26.93</td><td><strong>0.8426</strong></td>
+                                </tr>
+                                <tr class="separator-row"><td colspan="13"></td></tr>
+                                <tr class="highlight-row">
+                                    <td><strong>TETO-VFI</strong></td>
+                                    <td><strong>10.41</strong></td><td><strong>0.0684</strong></td><td>25.73</td><td>0.8346</td>
+                                    <td><strong>7.65</strong></td><td><strong>0.0689</strong></td><td>26.21</td><td>0.8314</td>
+                                    <td><strong>7.88</strong></td><td><strong>0.0859</strong></td><td>25.15</td><td>0.7955</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- HQ-EVFI -->
+                <div class="chart-card">
+                    <h4 class="chart-card-title">Zero-shot Generalization on HQ-EVFI</h4>
+                    <div class="table-container">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">Method</th>
+                                    <th colspan="4">&times;1</th>
+                                    <th colspan="4">&times;15</th>
+                                </tr>
+                                <tr>
+                                    <th>FID&darr;</th><th>LPIPS&darr;</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th>
+                                    <th>FID&darr;</th><th>LPIPS&darr;</th><th>PSNR&uarr;</th><th>SSIM&uarr;</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="separator-row"><td colspan="9"></td></tr>
+                                <tr>
+                                    <td>TimeLens-XL</td>
+                                    <td>26.50</td><td>0.0601</td><td>25.51</td><td>0.8856</td>
+                                    <td>28.83</td><td>0.0579</td><td><strong>25.67</strong></td><td><strong>0.8942</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>CBMNet-Large</td>
+                                    <td>18.92</td><td>0.0717</td><td><strong>29.00</strong></td><td>0.8849</td>
+                                    <td>26.19</td><td>0.0827</td><td>27.38</td><td>0.8767</td>
+                                </tr>
+                                <tr>
+                                    <td>RE-VDM</td>
+                                    <td>21.18</td><td>0.0605</td><td>26.95</td><td>0.8714</td>
+                                    <td>33.42</td><td>0.0801</td><td>25.56</td><td>0.8565</td>
+                                </tr>
+                                <tr class="separator-row"><td colspan="9"></td></tr>
+                                <tr class="highlight-row">
+                                    <td><strong>TETO-VFI</strong></td>
+                                    <td><strong>17.39</strong></td><td><strong>0.0401</strong></td><td>26.75</td><td><strong>0.9093</strong></td>
+                                    <td><strong>19.89</strong></td><td><strong>0.0501</strong></td><td>25.36</td><td>0.8923</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--color-text-muted); text-align: center; margin-top: 0.5rem;">
+                        Without fine-tuning on HQ-EVFI, TETO-VFI achieves the best perceptual quality (FID, LPIPS).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Qualitative Results -->
+            <div id="sub-vfi-qual" data-subsection class="results-block">
+                <h3 class="analysis-subtitle highlight">Qualitative Results</h3>
+
+                <div class="carousel-container" style="margin-bottom: 1rem;">
+                    <div class="carousel-viewport">
+                        <div class="carousel-track" id="vfiqual-track">
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="vfi/vfi_elastic.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="vfi/vfi_jacket.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="results-slide-content">
+                                    <video muted autoplay loop playsinline style="width:100%; border-radius:8px;"><source src="vfi/vfi_ball.mp4" type="video/mp4"></video>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-nav-btn prev" onclick="moveCarousel('vfiqual', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button class="carousel-nav-btn next" onclick="moveCarousel('vfiqual', 1)"><i class="fa-solid fa-chevron-right"></i></button>
+                    <div class="carousel-dots" id="vfiqual-dots">
+                        <button class="carousel-dot active" onclick="goToSlide('vfiqual', 0)"></button>
+                        <button class="carousel-dot" onclick="goToSlide('vfiqual', 1)"></button>
+                        <button class="carousel-dot" onclick="goToSlide('vfiqual', 2)"></button>
+                    </div>
+                </div>
+                <div class="results-caption">
+                    <p>TETO-VFI produces sharper boundaries and more faithful reconstructions in dynamic motion regions.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ==================== CITATION ==================== -->
+    <section id="citation" class="citation-section">
+        <div class="container">
+            <h2 class="section-title" style="font-size: 1.5rem; border: none; margin-bottom: 1rem;">Citation</h2>
+            <div class="citation-block group">
+                <button onclick="copyBibtex()" class="citation-copy-btn">
+                    <i class="fa-regular fa-copy"></i> Copy
+                </button>
+                <div id="bibtex-text" style="display: none;">@article{yang2026teto,
+  title={TETO: Tracking Events with Teacher Observation for Motion Estimation and Frame Interpolation},
+  author={Yang, Jini and Hong, Eunbeen and Son, Soowon and Lee, Hyunkoo and Hong, Sunghwan and Kim, Sunok and Kim, Seungryong},
+  journal={},
+  year={2026}
+}</div>
+                <pre class="citation-code"><code>@article{yang2026teto,
+  title={TETO: Tracking Events with Teacher Observation
+         for Motion Estimation and Frame Interpolation},
+  author={Yang, Jini and Hong, Eunbeen and Son, Soowon
+          and Lee, Hyunkoo and Hong, Sunghwan
+          and Kim, Sunok and Kim, Seungryong},
+  journal={},
+  year={2026}
+}</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>TETO: Tracking Events with Teacher Observation for Motion Estimation and Frame Interpolation.</p>
+        </div>
+    </footer>
+
+    <script>
+        function initFadeInAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.section, .hero-section, .citation-section, .footer')
+                .forEach(s => { s.classList.add('fade-in-section'); observer.observe(s); });
+        }
+
+        function initScrollSpy() {
+            const sections = [...document.querySelectorAll('section[id]')];
+            const sidebarLinks = document.querySelectorAll('.sidebar-item');
+            const sidebarGroups = document.querySelectorAll('.sidebar-group');
+            const sidebar = document.querySelector('.sidebar');
+
+            function update() {
+                const mid = window.innerHeight * 0.5;
+                let activeSection = sections[0];
+                for (const s of sections) {
+                    if (s.getBoundingClientRect().top <= mid) activeSection = s;
+                }
+                const subs = [...activeSection.querySelectorAll('[data-subsection]')];
+                let activeSub = null;
+                for (const sub of subs) {
+                    if (sub.getBoundingClientRect().top <= mid) activeSub = sub;
+                }
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                sidebarGroups.forEach(g => g.classList.remove('expanded'));
+                const sectionLink = document.querySelector(`.sidebar-item[href="#${activeSection.id}"]`);
+                if (sectionLink) {
+                    sectionLink.classList.add('active');
+                    const group = sectionLink.closest('.sidebar-group');
+                    if (group) group.classList.add('expanded');
+                }
+                if (activeSub) {
+                    sectionLink && sectionLink.classList.remove('active');
+                    const subLink = document.querySelector(`.sidebar-sub-item[href="#${activeSub.id}"]`);
+                    if (subLink) {
+                        subLink.classList.add('active');
+                        const group = subLink.closest('.sidebar-group');
+                        if (group) group.classList.add('expanded');
+                    }
+                }
+                const activeLink = document.querySelector('.sidebar-item.active');
+                if (activeLink && sidebar) {
+                    const lr = activeLink.getBoundingClientRect();
+                    const sr = sidebar.getBoundingClientRect();
+                    sidebar.style.setProperty('--active-position', `${lr.top - sr.top - 32}px`);
+                }
+            }
+            window.addEventListener('scroll', update, { passive: true });
+            update();
+        }
+
+        // Carousel
+        const carouselState = {};
+        function moveCarousel(id, dir) {
+            const track = document.getElementById(id + '-track');
+            const slides = track.querySelectorAll('.carousel-slide');
+            if (!carouselState[id]) carouselState[id] = 0;
+            carouselState[id] = Math.max(0, Math.min(slides.length - 1, carouselState[id] + dir));
+            updateCarousel(id);
+        }
+        function goToSlide(id, idx) {
+            carouselState[id] = idx;
+            updateCarousel(id);
+        }
+        function updateCarousel(id) {
+            const track = document.getElementById(id + '-track');
+            const dots = document.getElementById(id + '-dots').querySelectorAll('.carousel-dot');
+            const idx = carouselState[id] || 0;
+            track.style.transform = `translateX(-${idx * 100}%)`;
+            dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        }
+
+        function copyBibtex() {
+            const text = document.getElementById('bibtex-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.citation-copy-btn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initScrollSpy();
+            initFadeInAnimations();
+        });
+    </script>
+</body>
+</html>
