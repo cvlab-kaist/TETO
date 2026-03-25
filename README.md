@@ -57,3 +57,6 @@ Code will be released soon. Stay tuned!
 }
 ```
 
+## Data
+
+This work uses the [ERF-X170FPS](https://github.com/intelpro/CBMNet) and [EHPT-XC](https://github.com/Chohoonhee/EHPT-XC) datasets, kindly provided by the [KAIST Visual Intelligence Lab](https://vi.kaist.ac.kr/).
