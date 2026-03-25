@@ -1,7 +1,7 @@
 <h1 align="center">TETO<br>Tracking Events with Teacher Observation<br>for Motion Estimation and Frame Interpolation</h1>
 
 <p align="center">
-  <a href="https://arxiv.org/"><img src="https://img.shields.io/badge/arXiv-2602.12003-b31b1b.svg"></a>
+  <a href="https://arxiv.org/pdf/2603.23487"><img src="https://img.shields.io/badge/arXiv-2603.23487-b31b1b.svg"></a>
   <a href="https://sheep1283.github.io/TETO_page/"><img src="https://img.shields.io/badge/Project-Page-blue"></a>
 </p>
 
@@ -46,11 +46,14 @@ Code will be released soon. Stay tuned!
 ## Citation
 
 ```bibtex
-@article{yang2026teto,
-  title={TETO: Tracking Events with Teacher Observation for Motion Estimation and Frame Interpolation},
-  author={Yang, Jini and Hong, Eunbeen and Son, Soowon and Lee, Hyunkoo and Hong, Sunghwan and Kim, Sunok and Kim, Seungryong},
-  journal={arXiv preprint arXiv:2602.12003},
-  year={2026}
+@misc{yang2026tetotrackingeventsteacher,
+      title={TETO: Tracking Events with Teacher Observation for Motion Estimation and Frame Interpolation}, 
+      author={Jini Yang and Eunbeen Hong and Soowon Son and Hyunkoo Lee and Sunghwan Hong and Sunok Kim and Seungryong Kim},
+      year={2026},
+      eprint={2603.23487},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2603.23487}, 
 }
 ```
 
